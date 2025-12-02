@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Tree 전력 예측</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+    <style>
+        @font-face {
+            font-family: 'NanumSquare';
+            src: url('/static/nanum-square/NanumSquareR.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        body, .navbar-custom, .logo, .menu a, h1, label, button, .card, .table {
+            font-family: 'NanumSquare', Arial, sans-serif !important;
+        }
+        body { background: #f7f7f2; }
+        .navbar-custom {
+            background: #0051ba;
+            padding: 18px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+            margin-bottom: 32px;
+            box-shadow: none;
+        }
+        .navbar-custom .logo {
+            font-size: 1.7rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .navbar-custom .menu a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 900;
+            font-size: 1.2rem;
+            margin-left: 32px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .navbar-custom .menu a:hover {
+            color: #ffd600;
+            text-decoration: underline;
+        }
+        .container { max-width: 1200px; }
+        .card {
+            margin-bottom: 20px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px #0001;
+            border: none;
+        }
+        .card-title {
+            font-weight: 900;
+            color: #003580;
+            font-size: 1.3rem;
+        }
+        .btn-primary {
+            background: #0051ba;
+            border: none;
+            border-radius: 18px;
+            font-weight: 900;
+            font-size: 1.2rem;
+            padding: 12px 36px;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover {
+            background: #ffd600;
+            color: #0051ba;
+        }
+        .form-label {
+            font-weight: 700;
+            color: #003580;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #003580;
+            letter-spacing: 2px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        input[type="text"].date-picker {
+            font-size: 1.7rem;
+            padding: 22px 28px;
+            height: 70px;
+            border-radius: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar-custom">
+        <div class="logo">🔌 Power Demand Forecasting System</div>
+        <div class="menu">
+            <a href="/">Home</a>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h1 class="mb-4">Decision Tree 기반 전력 예측</h1>
+        
+        <!-- 입력 폼 -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">예측 날짜 및 날씨 정보 입력</h5>
+                <form id="predictionForm">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="date" class="form-label">날짜</label>
+                                <input type="text" class="form-control date-picker" id="date" name="date" required autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="relative_humidity" class="form-label">상대습도</label>
+                                <input type="number" step="0.1" class="form-control" id="relative_humidity" name="relative_humidity">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="vapor_pressure" class="form-label">수증기압</label>
+                                <input type="number" step="0.1" class="form-control" id="vapor_pressure" name="vapor_pressure">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="coolingHeating" class="form-label">냉난방지수</label>
+                                <input type="number" step="0.1" class="form-control" id="coolingHeating" name="coolingHeating">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="ms_diff" class="form-label">최대전력 (전일과 비교)</label>
+                                <input type="number" step="0.1" class="form-control" id="ms_diff" name="ms_diff">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="hr_diff" class="form-label">시간별 전력 변화</label>
+                                <input type="number" step="0.1" class="form-control" id="hr_diff" name="hr_diff">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="CPI_diff" class="form-label">소비자물가 변동</label>
+                                <input type="number" step="0.1" class="form-control" id="CPI_diff" name="CPI_diff">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="daily_rainfall" class="form-label">일강수량</label>
+                                <input type="number" step="0.1" class="form-control" id="daily_rainfall" name="daily_rainfall">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">예측하기</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 예측 결과 -->
+        <div class="card" id="resultCard" style="display: none;">
+            <div class="card-body">
+                <h5 class="card-title">예측 결과</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6>예측값 및 공급 추천</h6>
+                        <table class="table">
+                            <tr>
+                                <td>예측 최대전력</td>
+                                <td id="prediction">-</td>
+                            </tr>
+                            <tr>
+                                <td>공급 추천량</td>
+                                <td id="supplyRecommendation">-</td>
+                            </tr>
+                            <tr id="actualRow" style="display: none;">
+                                <td>실제 전력 차분</td>
+                                <td id="actualValue">-</td>
+                            </tr>
+                            <tr id="errorRow" style="display: none;">
+                                <td>오차</td>
+                                <td id="error">-</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>모델 성능 지표</h6>
+                        <table class="table">
+                            <tr>
+                                <td>MAE</td>
+                                <td id="mae">-</td>
+                            </tr>
+                            <tr>
+                                <td>RMSE</td>
+                                <td id="rmse">-</td>
+                            </tr>
+                            <tr>
+                                <td>MAPE</td>
+                                <td id="mape">-</td>
+                            </tr>
+                            <tr>
+                                <td>R²</td>
+                                <td id="r2">-</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 특성 중요도 -->
+        <div class="card" id="featureImportanceCard" style="display: none;">
+            <div class="card-body">
+                <h5 class="card-title">특성 중요도</h5>
+                <div class="chart-container">
+                    <canvas id="featureImportanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lineChart = null;
+        let pieChart = null;
+        let featureImportanceChart = null;
+
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/dt/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    alert('예측 중 오류가 발생했습니다: ' + data.error);
+                }
+            } catch (error) {
+                alert('서버 통신 중 오류가 발생했습니다.');
+            }
+        });
+
+        function displayResults(data) {
+            // 결과 카드 표시
+            document.getElementById('resultCard').style.display = 'block';
+            document.getElementById('featureImportanceCard').style.display = 'block';
+
+            // 예측값 표시
+            document.getElementById('prediction').textContent = data.prediction.toFixed(2) + ' MW';
+            document.getElementById('supplyRecommendation').textContent = data.supply_recommendation.toFixed(2) + ' MW';
+
+            // 실제값 및 오차 표시
+            const actualRow = document.getElementById('actualRow');
+            const errorRow = document.getElementById('errorRow');
+            if (data.actual_value !== null) {
+                actualRow.style.display = '';
+                document.getElementById('actualValue').textContent = data.actual_value.toFixed(2) + ' MW';
+                errorRow.style.display = '';
+                document.getElementById('error').textContent = 
+                    `${data.error_abs.toFixed(2)} MW (${data.error_pct.toFixed(2)}%)`;
+            } else {
+                actualRow.style.display = 'none';
+                errorRow.style.display = 'none';
+            }
+
+            // 모델 성능 지표 표시
+            document.getElementById('mae').textContent = data.model_metrics.mae?.toFixed(2) || '-';
+            document.getElementById('rmse').textContent = data.model_metrics.rmse?.toFixed(2) || '-';
+            document.getElementById('mape').textContent = data.model_metrics.mape?.toFixed(2) + '%' || '-';
+            document.getElementById('r2').textContent = data.model_metrics.r2?.toFixed(4) || '-';
+
+            // 차트 업데이트
+            updateCharts(data);
+        }
+
+        function updateCharts(data) {
+            // 라인 차트
+            if (lineChart) lineChart.destroy();
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: data.line_labels,
+                    datasets: [{
+                        label: '전력 차분(MW)',
+                        data: data.line_values,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // 파이 차트
+            if (pieChart) pieChart.destroy();
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['공급 추천량', '예측 전력 차분'],
+                    datasets: [{
+                        data: data.pie_values,
+                        backgroundColor: ['#64a8ff', '#ffe066']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // 특성 중요도 차트
+            if (featureImportanceChart) featureImportanceChart.destroy();
+            const featureCtx = document.getElementById('featureImportanceChart').getContext('2d');
+            featureImportanceChart = new Chart(featureCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.feature_importance.labels,
+                    datasets: [{
+                        label: '특성 중요도',
+                        data: data.feature_importance.values,
+                        backgroundColor: 'rgb(75, 192, 192)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        flatpickr.localize(flatpickr.l10ns.ko);
+        flatpickr("#date", {
+            dateFormat: "Y-m-d",
+            locale: "ko",
+            allowInput: true,
+            defaultDate: new Date(),
+            disableMobile: true,
+            minDate: "2000-01-01",
+            maxDate: "2100-12-31",
+            static: true,
+            monthSelectorType: "static"
+        });
+    </script>
+</body>
+</html> 

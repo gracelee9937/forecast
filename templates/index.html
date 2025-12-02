@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전력 수요 예측 시스템</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumGothic@latest/nanumgothic.css">
+    <!-- Chart.js 3.x + chartjs-chart-matrix 3.x CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- jQuery는 그 아래에! -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- flatpickr 등 나머지 라이브러리 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+    <!-- Plotly.js CDN (히트맵용) -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            background: #f7f7f2;
+            color: #222;
+            font-family: 'NanumGothic', Arial, sans-serif;
+            margin: 0;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 28px 60px;
+            background: #0051ba;
+            min-height: 72px;
+        }
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'NanumGothic', Arial, sans-serif;
+        }
+        .menu a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 40px;
+            font-weight: 900;
+            font-size: 1.3rem;
+            transition: color 0.2s;
+            text-transform: uppercase;
+            font-family: 'NanumGothic', Arial, sans-serif;
+            letter-spacing: 1px;
+        }
+        .menu a:hover { color: #fff; text-decoration: underline; }
+        .main-banner {
+            width: 100vw;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        .main-banner img {
+            width: 100vw;
+            max-width: 100vw;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        .desc {
+            text-align: center;
+            font-size: 2.1rem;
+            color: #333;
+            margin: 48px 0 32px 0;
+        }
+        .desc b { font-size: 2.5rem; color: #0051ba; }
+        .desc span { font-size: 1.3rem; color: #1976d2; }
+        .main-card {
+            max-width: 540px;
+            margin: 0 auto 48px auto;
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 4px 24px #0051ba22;
+            padding: 48px 36px 36px 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .main-card h2 {
+            font-size: 2rem;
+            color: #003580;
+            font-weight: 900;
+            margin-bottom: 18px;
+        }
+        .main-card form {
+            width: 100%;
+        }
+        .form-label { font-weight: bold; color: #0051ba; font-size: 1.25rem; font-weight: 900; }
+        .main-card input[type="date"],
+        .main-card input[type="number"] {
+            width: 100%;
+            padding: 12px 10px;
+            margin: 8px 0 18px 0;
+            border: 1.5px solid #bcd6ff;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-family: 'NanumGothic', Arial, sans-serif;
+            background: #f7faff;
+        }
+        .main-card input[type="date"] {
+            font-size: 1.45rem;
+            height: 60px;
+            padding: 0 22px;
+            width: 340px;
+            max-width: 100%;
+        }
+        .main-card input[type="text"]#date {
+            display: block;
+            width: 100% !important;
+            max-width: 420px;
+            height: 60px !important;
+            font-size: 1.45rem !important;
+            padding: 0 22px !important;
+            box-sizing: border-box;
+            background: #f7faff;
+            border: 1.5px solid #bcd6ff;
+            border-radius: 8px;
+            margin-top: 8px;
+            margin-bottom: 18px;
+        }
+        .main-card button, .go-btn {
+            display: block;
+            margin: 0 auto;
+            background: #0051ba;
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 900;
+            border: none;
+            border-radius: 14px;
+            padding: 18px 48px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            text-decoration: none;
+            width: fit-content;
+            text-transform: uppercase;
+            font-family: 'NanumGothic', Arial, sans-serif;
+            letter-spacing: 1px;
+        }
+        .main-card button:hover, .go-btn:hover {
+            background: #ffd600;
+            color: #0051ba;
+        }
+        .result-section {
+            margin: 60px auto 80px auto;
+            background: #f0f6ff;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px #0051ba22;
+            padding: 48px 36px;
+            text-align: center;
+            width: 1700px;
+            max-width: 98vw;
+            display: block;
+        }
+        .prediction-comparison {
+            display: flex;
+            justify-content: space-around;
+            margin: 32px 0;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+        .prediction-card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 81, 186, 0.1);
+            min-width: 280px;
+            flex: 1;
+        }
+        .prediction-card h3 {
+            color: #0051ba;
+            margin-bottom: 16px;
+            font-size: 1.4rem;
+        }
+        .prediction-value {
+            font-size: 2.4rem;
+            font-weight: bold;
+            color: #003580;
+            margin: 16px 0;
+        }
+        .error-value {
+            font-size: 1.8rem;
+            color: #e65100;
+            margin: 16px 0;
+        }
+        .metrics-section {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            margin-top: 32px;
+            box-shadow: 0 4px 16px rgba(0, 81, 186, 0.1);
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-top: 16px;
+        }
+        .metric-card {
+            background: #f7faff;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #bcd6ff;
+        }
+        .metric-card h4 {
+            color: #0051ba;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .metric-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #003580;
+        }
+        .alert { background: #e6f0fa; color: #1976d2; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .chart-container { margin-top: 24px; }
+        @media (max-width: 700px) {
+            .main-card { padding: 24px 8px; }
+            .main-banner img { height: 120px; object-fit: cover; }
+        }
+        .flatpickr-calendar {
+            min-width: unset !important;
+            width: 100% !important;
+            max-width: 420px;
+            left: 0 !important;
+            right: auto !important;
+            font-size: 1.35rem !important;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px #0051ba33;
+        }
+        .flatpickr-days, .flatpickr-weekdays {
+            font-size: 1.2rem !important;
+        }
+        .flatpickr-day.selected, .flatpickr-day.today {
+            background: #0051ba;
+            color: #fff;
+            border-radius: 8px;
+        }
+        .flatpickr-day:hover {
+            background: #ffd600;
+            color: #0051ba;
+        }
+        .flatpickr-months {
+            height: 48px !important;
+            line-height: 48px !important;
+            font-size: 1.25rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #fff !important;
+            color: #003580 !important;
+            padding: 0 12px !important;
+            overflow: visible !important;
+            z-index: 20 !important;
+        }
+        .flatpickr-current-month, .flatpickr-month, .flatpickr-year, .flatpickr-monthDropdown-months, .flatpickr-monthDropdown-month {
+            height: 48px !important;
+            line-height: 48px !important;
+            font-size: 1.25rem !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #fff !important;
+            color: #003580 !important;
+            padding: 0 8px !important;
+            overflow: visible !important;
+            z-index: 20 !important;
+        }
+        .doughnut-section { max-width: 1200px; margin: 60px auto 80px auto; background: #fff; border-radius: 32px; box-shadow: 0 8px 32px #0051ba22; padding: 48px 36px; text-align: center; }
+        .doughnut-title { font-size: 2.2rem; font-weight: 900; color: #222; margin-bottom: 36px; }
+        .doughnut-flex {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 32px;
+            height: 100%;
+        }
+        .doughnut-desc {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 64px;
+            height: 100%;
+        }
+        .doughnut-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 0 0;
+            min-height: 220px;
+            justify-content: center;
+        }
+        .doughnut-icon { font-size: 2.2rem; color: #a78bfa; }
+        .doughnut-label[style*='OPTION'] {
+            margin-bottom: 8px;
+            letter-spacing: 1.5px;
+        }
+        .doughnut-label {
+            text-align: center;
+            font-size: 1.15rem;
+            font-weight: 900;
+            margin: 0 0 2px 0;
+        }
+        .doughnut-text {
+            font-size: 1rem;
+            color: #888;
+            max-width: 260px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .doughnut-center {
+            position: relative;
+            width: 380px;
+            height: 380px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        #doughnutChart { z-index: 1; }
+        .doughnut-center-icon { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; pointer-events: none; }
+        @media (max-width: 1100px) {
+            .doughnut-flex { flex-direction: column; align-items: center; }
+            .doughnut-desc { flex-direction: row; gap: 32px; justify-content: center; }
+            .doughnut-option { min-height: unset; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" style="color:#fff;">🔌 Power Demand Forecasting System</div>
+        <div class="menu">
+            <a href="/" style="color:#fff;">Home</a>
+            <!-- <a href="/dashboard" style="color:#fff;">Forecast</a> -->
+            <!-- <a href="#features" style="color:#fff;">Features</a> -->
+            <!-- <a href="#contact" style="color:#fff;">Contact</a> -->
+        </div>
+    </nav>
+    <div class="desc">
+        <b>전력 수요 예측 시스템</b><br>
+        <span>
+            날짜를 입력하면 AI가 전력 수요를 예측합니다.<br>
+            기상 정보가 없어도 예측은 가능하며,<br>
+            입력 시 더욱 정확한 예측 결과를 얻을 수 있습니다.<br><br>
+            Power Demand Forecasting System<br>
+            Enter a date to receive an AI-powered electricity demand forecast.<br>
+            Forecasting is possible without weather data,<br>
+            but accuracy improves when weather inputs are provided.
+        </span>
+    </div>
+    <div class="main-card">
+        <h2>전력 예측 입력</h2>
+        <form id="predictionForm">
+            <div class="mb-3">
+                <label for="date" class="form-label">날짜 선택</label>
+                <input type="text" class="form-control" id="date" name="date" required autocomplete="off">
+            </div>
+            <h5 style="color:#0051ba; margin-bottom:10px;">기상 데이터 (선택 입력)</h5>
+            <div class="mb-3">
+                <label for="일강수량" class="form-label">일강수량(mm)</label>
+                <input type="number" class="form-control" id="일강수량" name="일강수량(mm)_norm" step="0.1">
+            </div>
+            <div class="mb-3">
+                <label for="평균풍속" class="form-label">평균 풍속(m/s)</label>
+                <input type="number" class="form-control" id="평균풍속" name="평균 풍속(m/s)_norm" step="0.1">
+            </div>
+            <div class="mb-3">
+                <label for="최대풍속" class="form-label">최대 풍속(m/s)</label>
+                <input type="number" class="form-control" id="최대풍속" name="최대 풍속(m/s)_norm" step="0.1">
+            </div>
+            <div class="mb-3">
+                <label for="평균기온" class="form-label">평균기온(°C)</label>
+                <input type="number" class="form-control" id="평균기온" name="평균기온(°C)_norm" step="0.1">
+            </div>
+            <div class="mb-3">
+                <label for="최저기온" class="form-label">최저기온(°C)</label>
+                <input type="number" class="form-control" id="최저기온" name="최저기온(°C)_norm" step="0.1">
+            </div>
+            <div class="mb-3">
+                <label for="최고기온" class="form-label">최고기온(°C)</label>
+                <input type="number" class="form-control" id="최고기온" name="최고기온(°C)_norm" step="0.1">
+            </div>
+            <div class="text-center mt-4">
+                <button type="submit" class="go-btn">예측하기</button>
+            </div>
+        </form>
+    </div>
+    <div class="result-section" id="resultSection" style="display: none;">
+        <h2>예측 결과</h2>
+        <div class="prediction-comparison">
+            <div class="prediction-card">
+                <h3>예측 전력 수요</h3>
+                <div class="prediction-value" id="predictionValue">-</div>
+            </div>
+            <div class="prediction-card">
+                <h3>실제 전력 수요</h3>
+                <div class="prediction-value" id="actualValue">-</div>
+                <div id="futureDateMessage" style="display: none; color: #e65100; font-size: 1.2rem;">
+                    실제값이 아직 없습니다
+                </div>
+            </div>
+            <div class="prediction-card">
+                <h3>예측 오차</h3>
+                <div class="error-value" id="errorValue">-</div>
+                <div id="errorInfo" style="color:#1976d2; font-size:1rem; margin-top:8px; display:none;">
+                    📢 예측 결과 안내<br>
+                    입력하신 날짜에는 실제 전력 수요 데이터가 없어 오차는 표시되지 않습니다.<br>
+                    미래 날짜이거나 데이터셋에 없는 경우, 오차는 "-"로 표시됩니다.<br>
+                    예측값은 제공되며, 오차는 실제값이 있을 때만 계산됩니다.
+                </div>
+            </div>
+            <div class="prediction-card">
+                <h3>예측 신뢰도</h3>
+                <div class="prediction-value" id="confidenceValue">-</div>
+            </div>
+        </div>
+        
+        <div class="metrics-section">
+            <h3>모델 성능 지표</h3>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h4>MAE (Mean Absolute Error)</h4>
+                    <div class="metric-value" id="maeValue">-</div>
+                </div>
+                <div class="metric-card">
+                    <h4>RMSE (Root Mean Square Error)</h4>
+                    <div class="metric-value" id="rmseValue">-</div>
+                </div>
+                <div class="metric-card">
+                    <h4>MAPE (Mean Absolute Percentage Error)</h4>
+                    <div class="metric-value" id="mapeValue">-</div>
+                </div>
+                <div class="metric-card">
+                    <h4>R² (결정계수)</h4>
+                    <div class="metric-value" id="r2Value">-</div>
+                </div>
+            </div>
+            <div id="featureImportanceSection" style="margin-top:32px; display:none;">
+                <h3 style="margin-bottom:12px;">Feature Importance (변수 중요도)</h3>
+                <canvas id="featureImportanceChart" height="220"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="predictionChart"></canvas>
+        </div>
+    </div>
+    <div class="doughnut-section" style="display:none;">
+        <div class="doughnut-flex">
+            <div class="doughnut-desc left">
+                <div class="doughnut-option">
+                    <div class="doughnut-label" style="color:#1976d2;font-weight:900;font-size:1.1em;letter-spacing:1px;">OPTION 01</div>
+                    <div class="doughnut-label">사용자 입력 기반 예측<br><span style='font-size:0.95em;font-weight:400;color:#888;'>Input-Based Forecasting</span></div>
+                    <div class="doughnut-text">최신 데이터를 바탕으로 입력과 동시에 전력 수요를 예측합니다.<br><span style='color:#888;'>Predict electricity demand based on user input and the latest available data.</span></div>
+                </div>
+                <div class="doughnut-option">
+                    <div class="doughnut-label" style="color:#1976d2;font-weight:900;font-size:1.1em;letter-spacing:1px;">OPTION 03</div>
+                    <div class="doughnut-label">기상 데이터 연동<br><span style='font-size:0.95em;font-weight:400;color:#888;'>Weather Data Integration</span></div>
+                    <div class="doughnut-text">기온, 습도 등 기상 정보를 활용하여 예측 정확도를 높입니다.<br><span style='color:#888;'>Improve forecast accuracy using weather data such as temperature and humidity.</span></div>
+                </div>
+            </div>
+            <div class="doughnut-center">
+                <canvas id="doughnutChartOuter" width="380" height="380" style="position:absolute;left:0;top:0;z-index:1;"></canvas>
+                <canvas id="doughnutChartInner" width="260" height="260" style="position:absolute;left:60px;top:60px;z-index:2;"></canvas>
+            </div>
+            <div class="doughnut-desc right">
+                <div class="doughnut-option">
+                    <div class="doughnut-label" style="color:#1976d2;font-weight:900;font-size:1.1em;letter-spacing:1px;">OPTION 02</div>
+                    <div class="doughnut-label">공급 권장량 제시<br><span style='font-size:0.95em;font-weight:400;color:#888;'>Recommended Supply Suggestion</span></div>
+                    <div class="doughnut-text">예측 결과를 바탕으로 10~15% 여유를 둔 권장 공급량을 안내합니다.<br><span style='color:#888;'>Based on forecast results, the system suggests recommended supply with a 10–15% buffer.</span></div>
+                </div>
+                <div class="doughnut-option">
+                    <div class="doughnut-label" style="color:#1976d2;font-weight:900;font-size:1.1em;letter-spacing:1px;">OPTION 04</div>
+                    <div class="doughnut-label">시각화 대시보드<br><span style='font-size:0.95em;font-weight:400;color:#888;'>Visual Dashboard</span></div>
+                    <div class="doughnut-text">예측 결과와 최신 데이터를 직관적인 그래프로 제공합니다.<br><span style='color:#888;'>Visualize forecast results and up-to-date data with intuitive charts.</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="result-section" id="heatmapSection" style="margin-top:40px; text-align:left; overflow:visible; display:none;">
+        <h3 style="text-align:center; color:#1976d2; margin-bottom:24px;">시간/요일별 전력 수요 패턴 (Heatmap)</h3>
+        <div id="heatmap" style="width:900px;height:350px;margin:0 auto;"></div>
+    </div>
+    <div class="result-section" id="corrHeatmapSection" style="margin-top:40px; text-align:left; overflow:visible; display:none; width:1200px; max-width:99vw;">
+        <!-- <h3 style="text-align:center; color:#1976d2; margin-bottom:24px;">전력수요-기상변수 상관관계 히트맵</h3> -->
+        <div id="corrHeatmap" style="width:1100px;height:900px;margin:0 auto;"></div>
+    </div>
+    <footer class="footer" style="text-align:center; color:#888; font-size:0.95rem; margin-top:60px; padding-bottom:24px;">
+        문의: power@ai.com | &copy; 2025 Power Demand Forecasting System
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("#date", {
+                locale: 'ko',
+                dateFormat: 'Y-m-d',
+                disableMobile: true,
+                minDate: null,
+                allowInput: true,
+                static: true
+            });
+            // 도넛 차트 표시 (숫자 제거, 중앙 정렬)
+            if (document.getElementById('doughnutChartOuter') && document.getElementById('doughnutChartInner')) {
+                document.querySelector('.doughnut-section').style.display = 'block';
+                const labels = ['01', '02', '03', '04'];
+                const ctxOuter = document.getElementById('doughnutChartOuter').getContext('2d');
+                new Chart(ctxOuter, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: [25, 25, 25, 25],
+                            backgroundColor: [
+                                '#a5b4fc', '#c4b5fd', '#6366f1', '#818cf8'
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 8,
+                            cutout: '30%',
+                            rotation: -0.5 * Math.PI
+                        }]
+                    },
+                    options: {
+                        layout: { padding: 10 },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        },
+                        animation: { animateRotate: true, animateScale: true },
+                        responsive: false,
+                    }
+                });
+                // Inner doughnut (thicker ring, 구멍 더 작게)
+                const ctxInner = document.getElementById('doughnutChartInner').getContext('2d');
+                new Chart(ctxInner, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: [25, 25, 25, 25],
+                            backgroundColor: [
+                                '#dbeafe', '#ede9fe', '#a5b4fc', '#c7d2fe'
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 0,
+                            cutout: '55%',
+                            rotation: -0.5 * Math.PI
+                        }]
+                    },
+                    options: {
+                        layout: { padding: 10 },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        },
+                        animation: { animateRotate: true, animateScale: true },
+                        responsive: false,
+                    }
+                });
+            }
+        });
+        function drawCorrHeatmap() {
+            fetch('/correlation-heatmap-data')
+              .then(res => res.json())
+              .then(corr => {
+                const z = corr.matrix;
+                const labels = corr.labels;
+                const data = [{
+                  z: z,
+                  x: labels,
+                  y: labels,
+                  type: 'heatmap',
+                  colorscale: 'Blues',
+                  zmin: -1, zmax: 1,
+                  colorbar: { title: '상관계수', titleside: 'right', thickness: 18 },
+                  showscale: true,
+                  text: z.map(row => row.map(v => v.toFixed(2))),
+                  hoverinfo: 'x+y+z',
+                  xgap: 2,
+                  ygap: 2
+                }];
+                const layout = {
+                  margin: { t: 30, l: 180, r: 40, b: 220 },
+                  xaxis: {
+                    // title: '변수',
+                    side: 'bottom',
+                    tickangle: -60,
+                    tickfont: { size: 12, family: 'NanumGothic, Arial' },
+                    showgrid: true,
+                    gridcolor: '#e3eafc',
+                    gridwidth: 2
+                  },
+                  yaxis: {
+                    // title: '변수',
+                    tickfont: { size: 12, family: 'NanumGothic, Arial' },
+                    showgrid: true,
+                    gridcolor: '#e3eafc',
+                    gridwidth: 2
+                  },
+                  width: 1100, height: 900,
+                  // title: { text: '전력수요-기상변수 상관관계', font: { size: 22, color: '#1976d2' } },
+                  annotations: []
+                };
+                // 셀 중앙에 값 표시
+                for (let i = 0; i < labels.length; i++) {
+                  for (let j = 0; j < labels.length; j++) {
+                    layout.annotations.push({
+                      x: labels[j],
+                      y: labels[i],
+                      text: z[i][j].toFixed(2),
+                      showarrow: false,
+                      font: { size: 10, color: Math.abs(z[i][j]) > 0.6 ? 'white' : '#222' },
+                      xref: 'x1', yref: 'y1',
+                    });
+                  }
+                }
+                // Plotly.react('corrHeatmap', data, layout, {displayModeBar: false}); // 히트맵 시각화 주석 처리
+                // $('#corrHeatmapSection').show(); // 히트맵 섹션 표시도 주석 처리
+              });
+        }
+        $(document).ready(function() {
+            let lineChartObj = null;
+            $('#predictionForm').on('submit', function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '/predict',
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        updateResults(response);
+                    },
+                    error: function(xhr) {
+                        alert('예측 중 오류가 발생했습니다: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+            // drawCorrHeatmap을 페이지 로드 시 자동 호출
+            drawCorrHeatmap();
+        });
+        function safeNumber(val, unit='') {
+            if (val !== undefined && val !== null && !isNaN(val)) {
+                return val.toLocaleString() + unit;
+            }
+            return '-';
+        }
+        function safePercent(val) {
+            if (val !== undefined && val !== null && !isNaN(val)) {
+                return val.toFixed(1) + '%';
+            }
+            return '-';
+        }
+        function updateResults(data) {
+            // 안전하게 예측값 표시
+            $('#predictionValue').text(safeNumber(data.prediction, ' MW'));
+            $('#actualValue').text(safeNumber(data.actual_value, ' MW'));
+            if (data.error_abs !== undefined && data.error_abs !== null && !isNaN(data.error_abs) &&
+                data.error_pct !== undefined && data.error_pct !== null && !isNaN(data.error_pct)) {
+                $('#errorValue').text(`±${data.error_abs.toLocaleString()} MW (${data.error_pct.toFixed(1)}%)`);
+            } else {
+                $('#errorValue').text('-');
+            }
+            if (data.is_future_date) {
+                $('#futureDateMessage').show();
+                $('#errorInfo').show();
+            } else {
+                $('#futureDateMessage').hide();
+                if (data.actual_value === undefined || data.actual_value === null || isNaN(data.actual_value)) {
+                    $('#actualValue').text('데이터 없음');
+                    $('#errorValue').text('-');
+                    $('#errorInfo').show();
+                } else {
+                    $('#errorInfo').hide();
+                }
+            }
+            // Update model metrics
+            if (data.model_metrics) {
+                $('#maeValue').text(safeNumber(data.model_metrics.mae, ' MW'));
+                $('#rmseValue').text(safeNumber(data.model_metrics.rmse, ' MW'));
+                $('#mapeValue').text(safePercent(data.model_metrics.mape));
+                $('#r2Value').text(
+                    data.model_metrics.r2 !== null && data.model_metrics.r2 !== undefined && !isNaN(data.model_metrics.r2)
+                        ? data.model_metrics.r2.toFixed(4)
+                        : '-'
+                );
+            }
+            // Update charts
+            updateCharts(data);
+            updateFeatureImportance(data);
+            $('#resultSection').show();
+            // Update confidence value
+            $('#confidenceValue').text(
+                data.confidence !== null && data.confidence !== undefined && !isNaN(data.confidence)
+                    ? data.confidence.toFixed(2) + ' (표준편차)'
+                    : '-'
+            );
+        }
+
+        // Chart.js 라인 차트 업데이트 함수
+        let predictionChartObj = null;
+        function updateCharts(data) {
+            if (predictionChartObj) predictionChartObj.destroy();
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            predictionChartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.line_labels,
+                    datasets: [{
+                        label: '실제 전력수요',
+                        data: data.line_values,
+                        borderColor: '#1976d2',
+                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                        fill: true,
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true },
+                        title: { display: false }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#222' } },
+                        y: { ticks: { color: '#222' } }
+                    }
+                }
+            });
+        }
+
+        let featureImportanceChartObj = null;
+        function updateFeatureImportance(data) {
+            if (!data.feature_importance || !data.feature_importance.labels) {
+                $('#featureImportanceSection').hide();
+                return;
+            }
+            $('#featureImportanceSection').show();
+            const ctx = document.getElementById('featureImportanceChart').getContext('2d');
+            if (featureImportanceChartObj) featureImportanceChartObj.destroy();
+            // 그룹별 색상 매핑
+            const groupColors = {
+                'year': '#1976d2',
+                'season': '#ffd600',
+                'other': '#888888'
+            };
+            const barColors = data.feature_importance.groups
+                ? data.feature_importance.groups.map(g => groupColors[g] || '#888888')
+                : '#1976d2';
+            featureImportanceChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.feature_importance.labels,
+                    datasets: [{
+                        label: '중요도',
+                        data: data.feature_importance.values,
+                        backgroundColor: barColors,
+                        borderRadius: 8,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.7
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                generateLabels: function(chart) {
+                                    return [
+                                        { text: 'year', fillStyle: groupColors['year'] },
+                                        { text: 'season', fillStyle: groupColors['season'] }
+                                    ];
+                                }
+                            }
+                        },
+                        title: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { color: '#222' } },
+                        y: { ticks: { color: '#222' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html> 

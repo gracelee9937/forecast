@@ -1,0 +1,9 @@
+<nav class="navbar">
+    {% if request.path == '/predict' %}
+        <a href="/">홈</a>
+    {% else %}
+        <a href="/">홈</a>
+        <a href="#features" onclick="goToFeatures(event)">특징</a>
+        <a href="#contact" onclick="goToContact(event)">문의</a>
+    {% endif %}
+</nav> 

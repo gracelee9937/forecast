@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Power Demand Forecasting - Home</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumGothic@latest/nanumgothic.css">
+    <style>
+        @font-face {
+            font-family: 'NanumSquare';
+            src: url('/static/nanum-square/NanumSquareR.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'NanumSquare';
+            src: url('/static/nanum-square/NanumSquareB.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'NanumSquare';
+            src: url('/static/nanum-square/NanumSquareEB.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'NanumSquare';
+            src: url('/static/nanum-square/NanumSquareL.ttf') format('truetype');
+            font-weight: 300;
+            font-style: normal;
+        }
+        body, .navbar, .logo, .menu a, .main-title, .desc, .go-btn, .features, .footer {
+            font-family: 'NanumSquare', Arial, sans-serif !important;
+        }
+        body { background: #f7f7f2; font-family: 'NanumSquare', Arial, sans-serif; margin:0; }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 28px 60px;
+            background: #0051ba;
+            box-shadow: none;
+            min-height: 72px;
+        }
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .menu a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 40px;
+            font-weight: 900;
+            font-size: 1.3rem;
+            transition: color 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .menu a:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+        .main-banner {
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background: transparent;
+        }
+        .banner-img {
+            width: 100vw;
+            height: auto;
+            max-height: 65vh;
+            object-fit: contain;
+            display: block;
+            margin: 0;
+            padding: 0;
+            border-radius: 0;
+            box-shadow: none;
+            background: none;
+        }
+        .desc, .go-btn, .features, .footer {
+            margin-top: 48px;
+        }
+        .main-title {
+            font-size: 2.2rem;
+            font-weight: 400;
+            color: #003580;
+            letter-spacing: 2.5px;
+            margin-bottom: 22px;
+            line-height: 1.13;
+            text-shadow: none;
+            animation: none;
+            -webkit-text-fill-color: unset;
+        }
+        .desc {
+            text-align:center;
+            font-size:2.5rem;
+            color:#333;
+            margin-bottom:48px;
+            min-height:32vh;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+        }
+        .desc span {
+            font-size:2.1rem;
+            color:#0051ba;
+            font-weight:600;
+            text-shadow: 0 2px 12px #ffd60055, 0 1px 0 #fff;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+        .go-btn {
+            display: block;
+            margin: 0 auto;
+            background: #0051ba;
+            color: #fff;
+            font-size: 2.1rem;
+            font-weight: 900;
+            border: none;
+            border-radius: 22px;
+            padding: 32px 90px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            text-decoration: none;
+            width: fit-content;
+            text-transform: uppercase;
+        }
+        .go-btn:hover {
+            background: #ffd600;
+            color: #0051ba;
+        }
+        .features {
+            display:flex;
+            justify-content:center;
+            gap:192px;
+            margin:96px 0;
+            flex-wrap:wrap;
+        }
+        .feature-card {
+            position: relative;
+            background:#fff;
+            border-radius:32px;
+            box-shadow:0 8px 32px #0001;
+            padding:64px 48px;
+            width:400px;
+            text-align:center;
+            font-size:1.7rem;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 220px;
+            width: 100%;
+            background: url('/static/banner_main2.jpg') center/cover no-repeat;
+            opacity: 0.23;
+            filter: blur(2.5px);
+            z-index: 0;
+        }
+        .feature-card .icon,
+        .feature-card .title,
+        .feature-card .desc {
+            position: relative;
+            z-index: 1;
+        }
+        .feature-card .icon { font-size:4.5rem; margin-bottom:28px; }
+        .feature-card .title { font-size:2rem; font-weight:bold; color:#1976d2; margin-bottom:18px; }
+        .feature-card .desc { font-size:1.35rem; color:#444; }
+        .footer { text-align:center; color:#888; font-size:0.95rem; margin-top:60px; padding-bottom:24px; }
+        @media (max-width: 900px) {
+            .features { flex-direction:column; align-items:center; }
+        }
+        .feature-card.festival {
+            position: relative;
+            background: #fffbe8;
+            border-radius: 32px;
+            border: 8px solid #dbe7ff;
+            box-shadow: 0 8px 32px #0002;
+            padding: 0 0 32px 0;
+            width: 400px;
+            text-align: center;
+            font-size: 1.7rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .festival-img {
+            width: 220px;
+            height: 120px;
+            object-fit: cover;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            box-shadow: 0 4px 16px #0001;
+            position: relative;
+            filter: blur(2.5px);
+            opacity: 0.7;
+        }
+        .festival-label {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            background: linear-gradient(90deg, #ffd600 60%, #0051ba 100%);
+            color: #0051ba;
+            font-weight: 900;
+            font-size: 1.25rem;
+            padding: 8px 22px;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px #0002;
+            letter-spacing: 1px;
+            z-index: 2;
+        }
+        .festival-content {
+            background: #fff;
+            border-radius: 18px;
+            width: 92%;
+            height: auto;
+            margin: -32px auto 0 auto;
+            padding: 32px 18px 18px 18px;
+            box-shadow: 0 2px 12px #ffd60033;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .festival-content .icon {
+            font-size: 3.5rem;
+            margin-bottom: 12px;
+        }
+        .festival-content .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #003580;
+            margin-bottom: 12px;
+        }
+        .festival-content .desc {
+            font-size: 1.13rem;
+            color: #0051ba;
+            overflow: visible;
+            height: auto;
+            white-space: normal;
+            word-break: keep-all;
+            line-height: 1.7;
+            margin-top: 18px;
+        }
+        .festival-content .desc-ko {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.85;
+            color: #003580;
+            display: block;
+            margin-bottom: 18px;
+        }
+        .container {
+            max-width: 100vw;
+            padding: 0;
+            margin: 0;
+        }
+        .main-banner, .container, .section, .image-wrapper {
+            width: 100vw;
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" style="color:#fff;">🔌 Power Demand Forecasting System</div>
+        <div class="menu">
+            <a href="/dt">Forecast</a>
+            <a href="#features">Features</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav>
+    <div style="width: 100vw; max-width: 100vw; overflow: hidden; margin: 0 auto; background: #fff;">
+        <img src="/static/banner_main2.jpg"
+             style="width: 100vw; max-width: 100vw; height: auto; max-height: 60vh; object-fit: contain; display: block; margin: 0 auto;" />
+    </div>
+    <div class="desc">
+        <div class="main-title">
+            <!-- 'AI 기반 전력 수요 예측 플랫폼'과 'AI-Powered Electricity Demand Forecasting Platform' 제거 -->
+        </div>
+        <span>
+            날씨 데이터를 활용해 에너지 절약과 효율적인 공급을 실현합니다.<br>
+            지구와 미래를 위한 스마트 에너지 관리
+        </span>
+        <span style="font-size:1.5rem; color:#1976d2; margin-top:18px;">
+            We use weather data to save energy and enable efficient power supply.<br>
+            Smart energy management for the planet and our future.
+        </span>
+    </div>
+    <a href="/dt" class="go-btn">전력 수요 예측 확인하기</a>
+    <div id="features" class="features">
+        <div class="feature-card festival">
+            <img src="/static/banner_main2.jpg" class="festival-img" alt="banner" />
+            <div class="festival-label">예측 기반 전력 관리</div>
+            <div class="festival-content">
+                <div class="title">예측 기반 전력 관리<br>Power Forecasting</div>
+                <div class="desc">
+                    <span class="desc-ko">전력은 예측이 곧 절약입니다.<br>
+                    사용자가 선택한 날짜를 기반으로, AI가 전력 수요를 즉시 예측합니다.<br>
+                    정확한 예측은 에너지 효율의 시작입니다.</span><br>
+                    Power is savings when predicted.<br>
+                    Our AI forecasts electricity demand based on your selected date.<br>
+                    Accurate forecasting starts smarter energy use.
+                </div>
+            </div>
+        </div>
+        <div class="feature-card festival">
+            <img src="/static/banner_main2.jpg" class="festival-img" alt="banner" />
+            <div class="festival-label">기상 데이터 연동</div>
+            <div class="festival-content">
+                <div class="title">기상 데이터 연동<br>Weather-Aware AI</div>
+                <div class="desc">
+                    <span class="desc-ko">날씨는 전력 수요에 큰 영향을 줍니다.<br>
+                    기온, 강수량, 풍속을 AI가 분석해 정교한 예측을 제공합니다.<br>
+                    기상 데이터와 함께 더 똑똑해진 AI 예측.</span><br>
+                    Weather impacts energy demand.<br>
+                    Our AI analyzes temperature, rain, and wind to deliver precise forecasts.<br>
+                    Smarter predictions with weather-integrated AI.
+                </div>
+            </div>
+        </div>
+        <div class="feature-card festival">
+            <img src="/static/banner_main2.jpg" class="festival-img" alt="banner" />
+            <div class="festival-label">시각화 대시보드</div>
+            <div class="festival-content">
+                <div class="title">시각화 대시보드<br>Visual Dashboard</div>
+                <div class="desc">
+                    <span class="desc-ko">데이터를 쉽게 이해하세요.<br>
+                    예측된 전력 수요와 공급량을 그래프와 차트로 한눈에 확인할 수 있습니다.<br>
+                    모두를 위한 직관적인 에너지 인사이트.</span><br>
+                    Understand energy at a glance.<br>
+                    Forecasts and recommendations are shown through clear graphs and charts.<br>
+                    Intuitive insights for everyone.
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer id="contact" class="footer" style="text-align:center; margin-top:48px; padding:32px 0 16px 0; background:#f7f7f2;">
+        <a href="mailto:power@ai.com" style="font-size:1.35rem; font-weight:900; color:#0051ba; text-decoration:underline;">power@ai.com</a>
+        <div style="margin-top:18px; color:#888; font-size:1rem;">&copy; 2025 Power Demand Forecasting System</div>
+    </footer>
+</body>
+</html> 

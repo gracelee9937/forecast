@@ -1,0 +1,57 @@
+@font-face {
+    font-family: 'NanumSquare';
+    src: url('/static/nanum-square/NanumSquareR.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'NanumSquare';
+    src: url('/static/nanum-square/NanumSquareB.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'NanumSquare';
+    src: url('/static/nanum-square/NanumSquareEB.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'NanumSquare';
+    src: url('/static/nanum-square/NanumSquareL.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+body {
+    font-family: 'NanumSquare', Arial, sans-serif;
+    background: #f7f7f2;
+    margin: 0;
+}
+.navbar {
+    background: #0051ba;
+    color: #fff;
+    padding: 10px 40px;
+    display: flex;
+    gap: 40px;
+    font-weight: bold;
+    min-height: 48px;
+}
+.navbar a {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #fff;
+    text-decoration: none;
+}
+.navbar a:hover {
+    color: #fff;
+}
+section#features, section#contact {
+    margin: 60px 0 0 0;
+    padding: 40px;
+    background: #fffbe8;
+    border-radius: 16px;
+}
+.logo {
+    font-size: 0.8rem;
+    font-weight: 400;
+} 

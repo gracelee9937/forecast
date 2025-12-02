@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>예측 페이지</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+    window.goToFeatures = function(e) {
+        e.preventDefault();
+        const features = document.getElementById('features');
+        if (features) features.scrollIntoView({ behavior: 'smooth' });
+    }
+    window.goToContact = function(e) {
+        e.preventDefault();
+        const contact = document.getElementById('contact');
+        if (contact) contact.scrollIntoView({ behavior: 'smooth' });
+    }
+    </script>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <main>
+        <h1>예측 페이지</h1>
+        <form id="predictForm">
+          <label for="date">예측 날짜:</label>
+          <input type="date" id="date" name="date" required>
+          <button type="submit">예측하기</button>
+        </form>
+        <div id="result"></div>
+        <section id="features">
+            <h2>특징</h2>
+            <p>이곳에 예측 페이지의 특징을 작성하세요.</p>
+        </section>
+        <section id="contact">
+            <h2>문의</h2>
+            <p>이곳에 문의 정보를 작성하세요.</p>
+        </section>
+    </main>
+    <script>
+    document.getElementById('predictForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const res = await fetch('/predict', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.prediction !== undefined && data.prediction !== null) {
+        document.getElementById('result').innerHTML =
+          `<b>예측 최대 전력:</b> ${data.prediction.toLocaleString()}<br>` +
+          `<b>권장 공급량(10% 여유):</b> ${data.recommended_supply_10.toLocaleString()}<br>` +
+          `<b>권장 공급량(15% 여유):</b> ${data.recommended_supply_15.toLocaleString()}`;
+      } else if (data.error) {
+        document.getElementById('result').innerHTML = `<span style='color:red'>${data.error}</span>`;
+      } else {
+        document.getElementById('result').innerHTML = '예측 결과가 없습니다.';
+      }
+    };
+    </script>
+</body>
+</html> 
