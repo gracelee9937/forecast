@@ -67,7 +67,7 @@ python app_dt.py
 └── requirements.txt    # 의존성 목록
 ```
 
-## 라이선스
+
 
 
 
